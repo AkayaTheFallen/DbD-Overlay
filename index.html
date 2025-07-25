@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herausforderungen Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+        }
+
+        .challenge-list {
+            margin-top: 20px;
+            border: 2px solid #444;
+            padding: 10px;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .challenge-item {
+            margin-bottom: 15px;
+            padding: 5px;
+            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .counter-buttons {
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .counter-buttons button {
+            font-size: 1.2rem;
+            margin: 0 5px;
+            padding: 5px 10px;
+            background-color: #444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .counter-buttons button:hover {
+            background-color: #666;
+        }
+
+        .add-button {
+            margin-top: 15px;
+            background-color: #444;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .add-button:hover {
+            background-color: #666;
+        }
+
+        .challenge-name {
+            margin-right: 10px;
+        }
+
+        .remove-button {
+            background-color: #d9534f;
+        }
+
+        .remove-button:hover {
+            background-color: #c9302c;
+        }
+
+        .done-checkbox {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Herausforderungen</h1>
+    <div class="challenge-list" id="challengeList">
+        <!-- Dynamisch hinzugefügte Herausforderungen erscheinen hier -->
+    </div>
+
+    <input type="text" id="newChallenge" placeholder="Neue Herausforderung" />
+    <button class="add-button" onclick="addChallenge()">Herausforderung hinzufügen</button>
+
+    <script>
+        // Initialisierung von challenges und counters aus localStorage
+        let challenges = JSON.parse(localStorage.getItem("challenges")) || [];
+        let counters = JSON.parse(localStorage.getItem("counters")) || {};
+        let completedChallenges = JSON.parse(localStorage.getItem("completedChallenges")) || [];
+
+        // Beim Laden der Seite die gespeicherten Daten anzeigen
+        window.onload = function() {
+            updateChallengeList();
+        };
+
+        // Die Liste der Herausforderungen und Zähler im HTML aktualisieren
+        function updateChallengeList() {
+            const challengeList = document.getElementById("challengeList");
+            challengeList.innerHTML = ""; // Liste zurücksetzen
+
+            challenges.forEach(challenge => {
+                const challengeItem = document.createElement("div");
+                challengeItem.classList.add("challenge-item");
+                challengeItem.innerHTML = `
+                    <input type="checkbox" class="done-checkbox" ${completedChallenges.includes(challenge) ? 'checked' : ''} onclick="toggleChallengeStatus('${challenge}')">
+                    <span class="challenge-name">${challenge}</span>
+                    <div class="counter-buttons">
+                        <button onclick="changeCounter('${challenge}', 1)">+</button>
+                        <span id="${challenge}Counter">${counters[challenge] || 0}</span>
+                        <button onclick="changeCounter('${challenge}', -1)">-</button>
+                    </div>
+                    <button class="remove-button" onclick="removeChallenge('${challenge}')">Entfernen</button>
+                `;
+                challengeList.appendChild(challengeItem);
+            });
+        }
+
+        // Zähler für eine Herausforderung ändern (Plus oder Minus)
+        function changeCounter(challenge, value) {
+            counters[challenge] = (counters[challenge] || 0) + value;
+            document.getElementById(`${challenge}Counter`).textContent = counters[challenge];
+            saveData();
+        }
+
+        // Eine neue Herausforderung hinzufügen
+        function addChallenge() {
+            const newChallenge = document.getElementById("newChallenge").value.trim();
+            if (newChallenge && !challenges.includes(newChallenge)) {
+                challenges.push(newChallenge);
+                counters[newChallenge] = 0; // Initialer Zählerwert
+                document.getElementById("newChallenge").value = "";
+                updateChallengeList();
+                saveData();
+            }
+        }
+
+        // Eine Herausforderung entfernen
+        function removeChallenge(challenge) {
+            challenges = challenges.filter(c => c !== challenge);
+            delete counters[challenge];
+            completedChallenges = completedChallenges.filter(c => c !== challenge);
+            updateChallengeList();
+            saveData();
+        }
+
+        // Eine Herausforderung als erledigt markieren
+        function toggleChallengeStatus(challenge) {
+            if (completedChallenges.includes(challenge)) {
+                completedChallenges = completedChallenges.filter(c => c !== challenge);
+            } else {
+                completedChallenges.push(challenge);
+            }
+            updateChallengeList();
+            saveData();
+        }
+
+        // Die aktuellen Daten im localStorage speichern
+        function saveData() {
+            localStorage.setItem("challenges", JSON.stringify(challenges));
+            localStorage.setItem("counters", JSON.stringify(counters));
+            localStorage.setItem("completedChallenges", JSON.stringify(completedChallenges));
+        }
+    </script>
+</body>
+</html>
